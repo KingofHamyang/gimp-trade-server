@@ -1,12 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { Margin } from './interfaces/margin.interface'
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Between } from 'typeorm';
+
+import { Margin } from './margin.entity';
 import { DateRangeDto } from './dto/date-range.dto'
 
 @Injectable()
 export class MarginsService {
-  private readonly margins: Margin[] = [];
+  constructor(
+    @InjectRepository(Margin)
+    private marginRepository: Repository<Margin>,
+  ) {}
 
-  findByDateRange(date_ragne: any): Margin[] {
-    return this.margins;
+  async findByDateRange(date_ragne: any): Promise<Margin[]> {
+    return await this.marginRepository.find({
+      datetime: Between(Date.now(), Date.now())
+    })
   }
 }
