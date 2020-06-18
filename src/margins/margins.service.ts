@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository } from 'typeorm';
 
+import * as moment from 'moment';
 import { Margin } from './margin.entity';
 import { DateRangeDto } from './dto/date-range.dto'
 
@@ -12,9 +13,16 @@ export class MarginsService {
     private marginRepository: Repository<Margin>,
   ) {}
 
-  async findByDateRange(date_ragne: any): Promise<Margin[]> {
-    return await this.marginRepository.find({
-      datetime: Between(Date.now(), Date.now())
-    })
+  async findByDateRange(dateRagne: DateRangeDto): Promise<Margin[]> {
+
+    const from: string = moment(dateRagne.from).toISOString();
+    const to: string = moment(dateRagne.to).toISOString();
+
+    return await this.marginRepository.createQueryBuilder()
+      .select()
+      .andWhere(`datetime >= '${from}'`)
+      .andWhere(`datetime < '${to}'`)
+      .printSql()
+      .getMany()
   }
 }

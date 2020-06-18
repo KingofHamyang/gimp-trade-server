@@ -1,3 +1,4 @@
 export class DateRangeDto {
-  from: Date;
+  from: string;
+  to: string;
 }
