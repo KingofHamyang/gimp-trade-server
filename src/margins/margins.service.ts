@@ -19,7 +19,7 @@ export class MarginsService {
       .insert()
       .into(Margin)
       .values({
-        datetime: Date.now(),
+        datetime: moment(newbie.datetime).toISOString,
         bitmex_price: newbie.bitmex_price,
         upbit_price: newbie.upbit_price,
         rate: newbie.rate
