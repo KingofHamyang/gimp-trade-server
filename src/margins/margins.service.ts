@@ -13,12 +13,27 @@ export class MarginsService {
     private marginRepository: Repository<Margin>,
   ) {}
 
+  async create(newbie: Margin) {
+    await this.marginRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Margin)
+      .values({
+        datetime: newbie.datetime,
+        bitmex_price: newbie.bitmex_price,
+        upbit_price: newbie.upbit_price,
+        rate: newbie.rate
+      })
+      .execute();
+  }
+
   async findByDateRange(dateRagne: DateRangeDto): Promise<Margin[]> {
 
     const from: string = moment(dateRagne.from).toISOString();
     const to: string = moment(dateRagne.to).toISOString();
 
-    return await this.marginRepository.createQueryBuilder()
+    return await this.marginRepository
+      .createQueryBuilder()
       .select()
       .andWhere(`datetime >= '${from}'`)
       .andWhere(`datetime < '${to}'`)
