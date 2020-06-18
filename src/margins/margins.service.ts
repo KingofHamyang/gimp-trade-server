@@ -24,6 +24,16 @@ export class MarginsService {
         upbit_price: newbie.upbit_price,
         rate: newbie.rate
       }).getSql());
+    console.log(this.marginRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Margin)
+      .values({
+        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss"),
+        bitmex_price: newbie.bitmex_price,
+        upbit_price: newbie.upbit_price,
+        rate: newbie.rate
+      }).getParameters());
     await this.marginRepository
       .createQueryBuilder()
       .insert()
