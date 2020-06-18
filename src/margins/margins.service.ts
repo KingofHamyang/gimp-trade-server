@@ -14,6 +14,16 @@ export class MarginsService {
   ) {}
 
   async create(newbie: Margin) {
+    console.log(this.marginRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Margin)
+      .values({
+        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss"),
+        bitmex_price: newbie.bitmex_price,
+        upbit_price: newbie.upbit_price,
+        rate: newbie.rate
+      }).getSql());
     await this.marginRepository
       .createQueryBuilder()
       .insert()
