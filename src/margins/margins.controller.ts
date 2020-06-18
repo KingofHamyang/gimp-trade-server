@@ -4,7 +4,7 @@ import { Margin } from './margin.entity'
 import { MarginsService } from './margins.service'
 
 
-@Controller('margins')
+@Controller('api/margins')
 export class MarginsController {
   constructor(private marginService: MarginsService) {}
 
