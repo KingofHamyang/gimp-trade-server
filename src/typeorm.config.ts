@@ -2,11 +2,11 @@ import {ConnectionOptions} from 'typeorm';
 
 const config: ConnectionOptions = {
   type: 'postgres',
-  host: 'localhost',
+  host: '34.64.173.19',
   port: 5432,
-  username: 'gimp_trade',
-  password: '12341234',
-  database: 'gimp_trade',
+  username: 'gimp-trade',
+  password: 'wX8YBskCUT',
+  database: 'gimp-trade',
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   synchronize: false,
   migrationsRun: true,
