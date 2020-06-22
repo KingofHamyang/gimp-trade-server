@@ -7,12 +7,12 @@ export class TasksService {
 
   @Cron('45 * * * * *')
   handleCron() {
-    this.logger.debug('Called when the second is 45');
+    // this.logger.debug('Called when the second is 45');
   }
 
   @Interval(1000)
   handleInterval() {
-    this.logger.debug('Called every 10 seconds');
+    // this.logger.debug('Called every 10 seconds');
   }
 
   @Interval(1000)
