@@ -13,33 +13,13 @@ export class MarginsService {
     private marginRepository: Repository<Margin>,
   ) {}
 
-  async create(newbie: Margin) {
-    console.log(this.marginRepository
-      .createQueryBuilder()
-      .insert()
-      .into(Margin)
-      .values([{
-        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss"),
-        bitmex_price: newbie.bitmex_price,
-        upbit_price: newbie.upbit_price,
-        rate: newbie.rate
-      }]).getSql());
-    console.log(this.marginRepository
-      .createQueryBuilder()
-      .insert()
-      .into(Margin)
-      .values({
-        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss"),
-        bitmex_price: newbie.bitmex_price,
-        upbit_price: newbie.upbit_price,
-        rate: newbie.rate
-      }).getParameters());
+  async create(newbie: Margin) :Promise<any>{
     await this.marginRepository
       .createQueryBuilder()
       .insert()
       .into(Margin)
       .values({
-        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss"),
+        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
         bitmex_price: newbie.bitmex_price,
         upbit_price: newbie.upbit_price,
         rate: newbie.rate
