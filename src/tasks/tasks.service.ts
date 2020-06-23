@@ -78,7 +78,7 @@ export class TasksService {
       });
   }
 
-  @Interval(10000)
+  @Interval(1000)
   gimpTrade() {
     const bitmexPrice = axios
       .get(
