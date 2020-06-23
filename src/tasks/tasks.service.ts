@@ -66,6 +66,7 @@ export class TasksService {
   @Interval(1000)
   //TODO : buyTargetGimp, sellTargetGimp 를 사용자객체에 따로 저장해놔야될듯(DB에)? 이렇게 parameter로 받아도 되는건가??
   tradeRequest(buyTargetGimp: Number, sellTargetGimp: Number) {
+    console.log('test');
     const bitmexPrice = axios
       .get(
         'https://www.bitmex.com/api/v1/trade?symbol=XBT&reverse=true&count=1',
