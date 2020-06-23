@@ -158,7 +158,7 @@ export class TasksService {
             ordType: 'Market',
           });
           // Change tradeState from 'SELL' to 'SLEEPING'
-          tradeState = '';
+          tradeState = 'SLEEPING';
         }
       },
     );
