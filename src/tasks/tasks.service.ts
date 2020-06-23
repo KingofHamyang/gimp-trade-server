@@ -63,15 +63,13 @@ export class TasksService {
       data: postBody,
       url,
     };
-    console.log(requestOptions);
     return axios(requestOptions)
       .then(response => {
         if (response.status === 200) {
-          console.log(response);
-          // console.log(
-          //   `${response.data.transactionTime} : ${response.data.cumQty}`,
-          // );
-          // console.log(response.data.avgPx);
+          console.log('-------------SUCCESS ORDER---------------');
+          console.log(
+            `${response.data.timestamp} : ${response.data.side} ${response.data.cumQty}$ at ${response.data.avgPx}$ in BITMEX`,
+          );
         }
         return response;
       })
@@ -81,8 +79,6 @@ export class TasksService {
   }
 
   @Interval(10000)
-  // TODO : buyTargetGimp, sellTargetGimp 를 사용자객체에 따로 저장해놔야될듯(DB에)? 이렇게 parameter로 받아도 되는건가??
-  // TODO : parameter를 언제 어떻게 채워줄 수 있는거임?? 일단 초기화를 하긴했는데 언제 parameter를 채워줘야되는지 잘 모르겠음
   gimpTrade() {
     const bitmexPrice = axios
       .get(
@@ -122,12 +118,13 @@ export class TasksService {
 
         const BTCAmount: number = Number(TRADE_AMOUNT_KRW) / BTCKRW;
         const orderQty: number = Math.ceil(BTCAmount * BTCUSD);
+
         console.log('BTCAmount : ', BTCAmount);
         console.log('TRADE_AMOUNT_KRW : ', TRADE_AMOUNT_KRW);
         console.log('orderQty : ', orderQty);
 
         // TODO : Add tradeState to DB. 'BUY', 'SELL' and 'SLEEPING state
-        let tradeState = 'BUY';
+        let tradeState = 'SELL';
         console.log('tradeState : ', tradeState);
         console.log('fixedGimp : ', fixedGimp);
         console.log(
@@ -135,7 +132,7 @@ export class TasksService {
           tradeState === 'BUY' ? BUY_TARGET_GIMP : SELL_TARGET_GIMP,
         );
         if (tradeState === 'BUY' && Number(BUY_TARGET_GIMP) >= fixedGimp) {
-          // buy upbit
+          // TODO: buy upbit
 
           // sell bitmex
           this.bitmexOrder('POST', 'order', {
@@ -143,13 +140,14 @@ export class TasksService {
             orderQty: -orderQty,
             ordType: 'Market',
           });
+
           // Change tradeStatev from 'BUY' to 'SELL'
           tradeState = 'SELL';
         } else if (
           tradeState === 'SELL' &&
           Number(SELL_TARGET_GIMP) <= fixedGimp
         ) {
-          // sell upbit
+          // TODO: sell upbit
 
           // buy bitmex
           this.bitmexOrder('POST', 'order', {
@@ -157,6 +155,7 @@ export class TasksService {
             orderQty: orderQty,
             ordType: 'Market',
           });
+
           // Change tradeState from 'SELL' to 'SLEEPING'
           tradeState = 'SLEEPING';
         }
