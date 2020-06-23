@@ -33,14 +33,11 @@
     "@nestjs/schedule": "^0.4.0",
     "@nestjs/serve-static": "^2.1.1",
     "@nestjs/typeorm": "^7.1.0",
-<<<<<<< HEAD
     "@types/qs": "^6.9.3",
     "axios": "^0.19.2",
     "crypto": "^1.0.1",
-=======
     "@types/dotenv": "^8.2.0",
     "dotenv": "^8.2.0",
->>>>>>> 8563c7693f71a97b2a404b368052c63590218e02
     "moment": "^2.26.0",
     "pg": "^8.2.1",
     "qs": "^6.9.4",
