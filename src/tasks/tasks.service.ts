@@ -1,11 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, Interval } from '@nestjs/schedule';
 import axios from 'axios';
 import qs from 'qs';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
+
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron, Interval } from '@nestjs/schedule';
+import {
+  BITMEX_API_KEY,
+  BITMEX_API_SECRET,
+  BUY_TARGET_GIMP,
+  SELL_TARGET_GIMP,
+  TRADE_AMOUNT_KRW,
+  FIXED_USDKRW,
+} from '../utils/config';
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
+  private tradeState = 
 
   @Cron('45 * * * * *')
   handleCron() {
@@ -22,9 +32,9 @@ export class TasksService {
     // graph gimp-rate PSQL에 업데이트
   }
 
-  makeRequest(method: string, endpoint: string, data: object) {
-    const apiKey = 'dpRWa_ByME44aT5MkEJJU4tJ';
-    const apiSecret = 'dOuLw6Q54RCbcQOjiaHakjo7DjvgEIwz7SGhvDmdm2wDx6P7';
+  bitmexOrder(method: any, endpoint: string, data: object) {
+    const apiKey = BITMEX_API_KEY;
+    const apiSecret = BITMEX_API_SECRET;
 
     const apiRoot: string = '/api/v1/';
     const expires: number = Math.round(new Date().getTime() / 1000) + 60;
@@ -34,12 +44,12 @@ export class TasksService {
     if (method === 'GET') query = '?' + qs.stringify(data);
     else postBody = JSON.stringify(data);
 
-    const signature = crypto
+    const signature: string = crypto
       .createHmac('sha256', apiSecret)
       .update(method + apiRoot + endpoint + query + expires + postBody)
       .digest('hex');
 
-    const headers = {
+    const headers: object = {
       'content-type': 'application/json',
       accept: 'application/json',
       'api-expires': expires,
@@ -52,21 +62,29 @@ export class TasksService {
       method,
       headers,
       data: postBody,
+      url,
     };
-    //if (method !== 'GET') requestOptions.data = postBody;
-    // console.log(requestOptions);
-    return axios
-      .post(url, requestOptions)
-      .then(response => response)
+    console.log(requestOptions);
+    return axios(requestOptions)
+      .then(response => {
+        if (response.status === 200) {
+          console.log(response);
+          // console.log(
+          //   `${response.data.transactionTime} : ${response.data.cumQty}`,
+          // );
+          // console.log(response.data.avgPx);
+        }
+        return response;
+      })
       .catch(e => {
         throw Error;
       });
   }
 
-  @Interval(1000)
-  //TODO : buyTargetGimp, sellTargetGimp 를 사용자객체에 따로 저장해놔야될듯(DB에)? 이렇게 parameter로 받아도 되는건가??
-  tradeRequest(buyTargetGimp: Number, sellTargetGimp: Number) {
-    console.log('test');
+  @Interval(10000)
+  // TODO : buyTargetGimp, sellTargetGimp 를 사용자객체에 따로 저장해놔야될듯(DB에)? 이렇게 parameter로 받아도 되는건가??
+  // TODO : parameter를 언제 어떻게 채워줄 수 있는거임?? 일단 초기화를 하긴했는데 언제 parameter를 채워줘야되는지 잘 모르겠음
+  gimpTrade() {
     const bitmexPrice = axios
       .get(
         'https://www.bitmex.com/api/v1/trade?symbol=XBT&reverse=true&count=1',
@@ -74,13 +92,12 @@ export class TasksService {
       .then(response => response.data[0].price)
       .catch(error => console.log(error));
 
-    // Change this api url to the official
-    // TODO 성준
+    // TODO : Change this api url to the official
     const upbitPrice = axios
       .get(
         'https://crix-api-endpoint.upbit.com/v1/crix/candles/minutes/1?code=CRIX.UPBIT.KRW-BTC&count=1',
       )
-      .then(response => response.data[1].price)
+      .then(response => response.data[0].tradePrice)
       .catch(error => console.log(error));
 
     const rate = axios
@@ -92,28 +109,57 @@ export class TasksService {
       ([BTCUSD, BTCKRW, USDKRW]) => {
         // console.log(BTCUSD, BTCKRW, USDKRW);
 
-        // 고정 마진
-        const fixedMargin = Number(
-          (((BTCKRW - 1150 * BTCUSD) * 100) / BTCKRW).toFixed(3),
+        // 고정김프
+        const fixedGimp: number = Number(
+          (((BTCKRW - Number(FIXED_USDKRW) * BTCUSD) * 100) / BTCKRW).toFixed(
+            3,
+          ),
         );
 
-        //TODO USDKRW number빼기
-        // 변동마진
-        const flexibleMargin = Number(
+        // 변동김프
+        const flexibleGimp: number = Number(
           (((BTCKRW - USDKRW * BTCUSD) * 100) / BTCKRW).toFixed(3),
         );
-        this.makeRequest('POST', 'order', {
-          symbol: 'XBTUSD',
-          orderQty: 1,
-          price: 590,
-          ordType: 'Limit',
-        });
-        if (sellTargetGimp <= fixedMargin) {
-          // sell upbit <-
-          // sell bitmex X1
-        } else if (buyTargetGimp >= fixedMargin) {
+
+        const BTCAmount: number = Number(TRADE_AMOUNT_KRW) / BTCKRW;
+        const orderQty: number = Math.ceil(BTCAmount * BTCUSD);
+        console.log('BTCAmount : ', BTCAmount);
+        console.log('TRADE_AMOUNT_KRW : ', TRADE_AMOUNT_KRW);
+        console.log('orderQty : ', orderQty);
+
+        // TODO : Add tradeState to DB. 'BUY', 'SELL' and 'SLEEPING state
+        let tradeState = 'BUY';
+        console.log('tradeState : ', tradeState);
+        console.log('fixedGimp : ', fixedGimp);
+        console.log(
+          'TARGET_GIMP : ',
+          tradeState === 'BUY' ? BUY_TARGET_GIMP : SELL_TARGET_GIMP,
+        );
+        if (tradeState === 'BUY' && Number(BUY_TARGET_GIMP) >= fixedGimp) {
           // buy upbit
-          // sell bitmex X2
+
+          // sell bitmex
+          this.bitmexOrder('POST', 'order', {
+            symbol: 'XBTUSD',
+            orderQty: -orderQty,
+            ordType: 'Market',
+          });
+          // Change tradeStatev from 'BUY' to 'SELL'
+          tradeState = 'SELL';
+        } else if (
+          tradeState === 'SELL' &&
+          Number(SELL_TARGET_GIMP) <= fixedGimp
+        ) {
+          // sell upbit
+
+          // buy bitmex
+          this.bitmexOrder('POST', 'order', {
+            symbol: 'XBTUSD',
+            orderQty: orderQty,
+            ordType: 'Market',
+          });
+          // Change tradeState from 'SELL' to 'SLEEPING'
+          tradeState = ''
         }
       },
     );
