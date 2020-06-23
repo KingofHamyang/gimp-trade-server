@@ -101,30 +101,29 @@ export class TasksService {
       .catch(error => console.log(error));
 
     Promise.all([bitmexPrice, upbitPrice, rate]).then(
-      ([BTCUSD, BTCKRW, USDKRW]) => {
-        // console.log(BTCUSD, BTCKRW, USDKRW);
-
+      ([btcUsd, btcKrw, usdKrw]) => {
         // 고정김프
         const fixedGimp: number = Number(
-          (((BTCKRW - Number(FIXED_USDKRW) * BTCUSD) * 100) / BTCKRW).toFixed(
+          (((btcKrw - Number(FIXED_USDKRW) * btcUsd) * 100) / btcKrw).toFixed(
             3,
           ),
         );
 
         // 변동김프
         const flexibleGimp: number = Number(
-          (((BTCKRW - USDKRW * BTCUSD) * 100) / BTCKRW).toFixed(3),
+          (((btcKrw - usdKrw * btcUsd) * 100) / btcKrw).toFixed(3),
         );
 
-        const BTCAmount: number = Number(TRADE_AMOUNT_KRW) / BTCKRW;
-        const orderQty: number = Math.ceil(BTCAmount * BTCUSD);
+        const tradeAmountKrw: number = Number(TRADE_AMOUNT_KRW);
+        const btcAmount: number = tradeAmountKrw / btcKrw;
+        const tradeAmountUsd: number = Math.ceil(btcAmount * btcUsd);
 
-        console.log('BTCAmount : ', BTCAmount);
-        console.log('TRADE_AMOUNT_KRW : ', TRADE_AMOUNT_KRW);
-        console.log('orderQty : ', orderQty);
+        console.log('btcAmount : ', btcAmount);
+        console.log('tradeAmountKrw : ', tradeAmountKrw);
+        console.log('tradeAmountUsd : ', tradeAmountUsd);
 
         // TODO : Add tradeState to DB. 'BUY', 'SELL' and 'SLEEPING state
-        let tradeState = 'SELL';
+        let tradeState = 'BUY';
         console.log('tradeState : ', tradeState);
         console.log('fixedGimp : ', fixedGimp);
         console.log(
@@ -137,7 +136,7 @@ export class TasksService {
           // sell bitmex
           this.bitmexOrder('POST', 'order', {
             symbol: 'XBTUSD',
-            orderQty: -orderQty,
+            orderQty: -tradeAmountUsd,
             ordType: 'Market',
           });
 
@@ -152,7 +151,7 @@ export class TasksService {
           // buy bitmex
           this.bitmexOrder('POST', 'order', {
             symbol: 'XBTUSD',
-            orderQty: orderQty,
+            orderQty: tradeAmountUsd,
             ordType: 'Market',
           });
 
