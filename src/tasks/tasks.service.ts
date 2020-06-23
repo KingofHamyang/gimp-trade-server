@@ -15,7 +15,6 @@ import {
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
-  private tradeState = 
 
   @Cron('45 * * * * *')
   handleCron() {
@@ -159,7 +158,7 @@ export class TasksService {
             ordType: 'Market',
           });
           // Change tradeState from 'SELL' to 'SLEEPING'
-          tradeState = ''
+          tradeState = '';
         }
       },
     );
