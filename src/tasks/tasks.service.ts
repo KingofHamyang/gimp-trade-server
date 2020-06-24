@@ -39,6 +39,7 @@ export class TasksService {
     const rateUrl = FREEFORE_API_URL + '/live?' + qs.stringify({
       pairs: 'USDKRW'
     })
+
     const requests = [axios.get(bitmexPriceUrl), axios.get(upbitPriceUrl), axios.get(rateUrl)];
 
     Promise.all(requests)
@@ -95,8 +96,7 @@ export class TasksService {
         }
       })
     .catch(e => {
-      console.log(e)
-      throw new Error(e);
+        throw new Error(e);
     });
   }
 }
