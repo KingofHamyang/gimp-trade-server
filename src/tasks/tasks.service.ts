@@ -1,114 +1,60 @@
-import axios, { AxiosRequestConfig, Method } from 'axios';
-import qs from 'qs';
-import * as crypto from 'crypto';
+import axios from 'axios';
+import * as qs from 'qs';
+
+import bitmexOrder from '../utils/order/order';
+import getGimp from '../utils/math/gimp';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import {
-  BITMEX_API_KEY,
-  BITMEX_API_SECRET,
+
+import { Config } from '../utils/config';
+
+const {
+  FIXED_USDKRW,
+  TRADE_AMOUNT_KRW,
   BUY_TARGET_GIMP,
   SELL_TARGET_GIMP,
-  TRADE_AMOUNT_KRW,
-  FIXED_USDKRW,
-} from '../utils/config';
-
-import { BitmexOrderDataInterface, BitmexRequestHeaderInterface } from './interfaces/bitmex-order.interface'
+  BITMEX_API_URL,
+  UPBIT_API_URL,
+  FREEFORE_API_URL,
+} = Config;
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  // @Interval(1000)
-  // graphDataSync() {
-  //   // graph gimp-rate PSQL에 업데이트
-  // }
-
-  getGimp(btcKrw: number, usdKrw: number, btcUsd:number): number {
-    return Number((((btcKrw - usdKrw * btcUsd) * 100) / btcKrw).toFixed(3))
-  }
-
-  bitmexOrder(method: Method, endpoint: string, data: BitmexOrderDataInterface): any {
-    const apiKey = BITMEX_API_KEY;
-    const apiSecret = BITMEX_API_SECRET;
-
-    const apiRoot = '/api/v1/';
-    const expires: number = Math.round(new Date().getTime() / 1000) + 60;
-
-    let query = '',
-      postBody = '';
-    if (method === 'GET') query = '?' + qs.stringify(data);
-    else postBody = JSON.stringify(data);
-
-    const signature: string = crypto
-      .createHmac('sha256', apiSecret)
-      .update(method + apiRoot + endpoint + query + expires + postBody)
-      .digest('hex');
-
-    const headers: BitmexRequestHeaderInterface = {
-      'content-type': 'application/json',
-      'accept': 'application/json',
-      'api-expires': expires,
-      'api-key': apiKey,
-      'api-signature': signature,
-    };
-    const url = 'https://www.bitmex.com' + apiRoot + endpoint + query;
-
-    const requestOptions: AxiosRequestConfig = {
-      method,
-      headers,
-      data: postBody,
-      url,
-    };
-
-    return axios(requestOptions)
-      .then(response => {
-        if (response.status === 200) {
-          console.log('-------------SUCCESS ORDER---------------');
-          console.log(
-            `${response.data.timestamp} : ${response.data.side} ${response.data.cumQty}$ at ${response.data.avgPx}$ in BITMEX`,
-          );
-        }
-        return response;
-      })
-      .catch(e => {
-        throw new Error(e);
-      });
-  }
-
   @Interval(1000)
   gimpTrade(): any {
-    const bitmexPrice = axios
-      .get(
-        'https://www.bitmex.com/api/v1/trade?symbol=XBT&reverse=true&count=1',
-      )
-      .then(response => response.data[0].price)
-      .catch(error => console.log(error));
+    const bitmexPriceUrl = BITMEX_API_URL + '/trade?' + qs.stringify({
+      symbol: 'XBT',
+      reverse: true,
+      count: 1
+    })
 
-    // TODO : Change this api url to the official
-    const upbitPrice = axios
-      .get(
-        'https://crix-api-endpoint.upbit.com/v1/crix/candles/minutes/1?code=CRIX.UPBIT.KRW-BTC&count=1',
-      )
-      .then(response => response.data[0].tradePrice)
-      .catch(error => console.log(error));
+    const upbitPriceUrl = UPBIT_API_URL + '/crix/candles/minutes/1?' + qs.stringify({
+      code: 'CRIX.UPBIT.KRW-BTC',
+      count: 1
+    })
 
-    const rate = axios
-      .get('https://www.freeforexapi.com/api/live?pairs=USDKRW')
-      .then(response => response.data.rates.USDKRW.rate.toFixed(1))
-      .catch(error => console.log(error));
+    const rateUrl = FREEFORE_API_URL + '/live?' + qs.stringify({
+      pairs: 'USDKRW'
+    })
+    const requests = [axios.get(bitmexPriceUrl), axios.get(upbitPriceUrl), axios.get(rateUrl)];
 
-    Promise.all([bitmexPrice, upbitPrice, rate]).then(
-      ([btcUsd, btcKrw, usdKrw]) => {
+    Promise.all(requests)
+      .then(([btcUsd, btcKrw, usdKrw]) => {
+        const btcUsdPrice = btcUsd.data[0].price
+        const btcKrwPrice = btcKrw.data[0].tradePrice
+        const usdKrwRate = usdKrw.data.rates.USDKRW.rate.toFixed(1)
         // 고정김프
-        const fixedGimp = this.getGimp(btcKrw, Number(FIXED_USDKRW), btcUsd);
+        const fixedGimp = getGimp(btcKrwPrice, Number(FIXED_USDKRW), btcUsdPrice);
 
         // 변동김프
-        const flexibleGimp = this.getGimp(btcKrw, usdKrw, btcUsd);
+        const flexibleGimp = getGimp(btcKrwPrice, usdKrwRate, btcUsdPrice);
 
         const tradeAmountKrw = Number(TRADE_AMOUNT_KRW);
-        const btcAmount: number = tradeAmountKrw / btcKrw;
-        const tradeAmountUsd: number = Math.ceil(btcAmount * btcUsd);
+        const btcAmount: number = tradeAmountKrw / btcKrwPrice;
+        const tradeAmountUsd: number = Math.ceil(btcAmount * btcUsdPrice);
 
         console.log('btcAmount : ', btcAmount);
         console.log('tradeAmountKrw : ', tradeAmountKrw);
@@ -126,7 +72,7 @@ export class TasksService {
           // TODO: buy upbit
 
           // sell bitmex
-          this.bitmexOrder('POST', 'order', {
+          bitmexOrder('POST', 'order', {
             symbol: 'XBTUSD',
             orderQty: -tradeAmountUsd,
             ordType: 'Market',
@@ -138,7 +84,7 @@ export class TasksService {
           // TODO: sell upbit
 
           // buy bitmex
-          this.bitmexOrder('POST', 'order', {
+          bitmexOrder('POST', 'order', {
             symbol: 'XBTUSD',
             orderQty: tradeAmountUsd,
             ordType: 'Market',
@@ -147,7 +93,10 @@ export class TasksService {
           // Change tradeState from 'SELL' to 'SLEEPING'
           tradeState = 'SLEEPING';
         }
-      },
-    );
+      })
+    .catch(e => {
+      console.log(e)
+      throw new Error(e);
+    });
   }
 }

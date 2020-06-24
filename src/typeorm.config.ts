@@ -1,5 +1,12 @@
-import {ConnectionOptions} from 'typeorm';
-import {DB_DATABASE, DB_HOST, DB_USERNAME, DB_PASSWORD, DB_PORT} from './utils/config';
+import { ConnectionOptions } from 'typeorm';
+import { Config } from './utils/config';
+const {
+  DB_DATABASE,
+  DB_HOST,
+  DB_USERNAME,
+  DB_PASSWORD,
+  DB_PORT
+} = Config;
 
 const config: ConnectionOptions = {
   type: 'postgres',
