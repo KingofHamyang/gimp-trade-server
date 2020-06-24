@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, Method } from 'axios';
 import qs from 'qs';
 import * as crypto from 'crypto';
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, Interval } from '@nestjs/schedule';
+import { Interval } from '@nestjs/schedule';
 import {
   BITMEX_API_KEY,
   BITMEX_API_SECRET,
@@ -12,34 +12,31 @@ import {
   TRADE_AMOUNT_KRW,
   FIXED_USDKRW,
 } from '../utils/config';
+
+import { BitmexOrderDataInterface, BitmexRequestHeaderInterface } from './interfaces/bitmex-order.interface'
+
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  @Cron('45 * * * * *')
-  handleCron() {
-    // this.logger.debug('Called when the second is 45');
+  // @Interval(1000)
+  // graphDataSync() {
+  //   // graph gimp-rate PSQL에 업데이트
+  // }
+
+  getGimp(btcKrw: number, usdKrw: number, btcUsd:number): number {
+    return Number((((btcKrw - usdKrw * btcUsd) * 100) / btcKrw).toFixed(3))
   }
 
-  @Interval(1000)
-  handleInterval() {
-    // this.logger.debug('Called every 10 seconds');
-  }
-
-  @Interval(1000)
-  graphDataSync() {
-    // graph gimp-rate PSQL에 업데이트
-  }
-
-  bitmexOrder(method: any, endpoint: string, data: object) {
+  bitmexOrder(method: Method, endpoint: string, data: BitmexOrderDataInterface): any {
     const apiKey = BITMEX_API_KEY;
     const apiSecret = BITMEX_API_SECRET;
 
-    const apiRoot: string = '/api/v1/';
+    const apiRoot = '/api/v1/';
     const expires: number = Math.round(new Date().getTime() / 1000) + 60;
 
-    let query: string = '',
-      postBody: string = '';
+    let query = '',
+      postBody = '';
     if (method === 'GET') query = '?' + qs.stringify(data);
     else postBody = JSON.stringify(data);
 
@@ -48,21 +45,22 @@ export class TasksService {
       .update(method + apiRoot + endpoint + query + expires + postBody)
       .digest('hex');
 
-    const headers: object = {
+    const headers: BitmexRequestHeaderInterface = {
       'content-type': 'application/json',
-      accept: 'application/json',
+      'accept': 'application/json',
       'api-expires': expires,
       'api-key': apiKey,
       'api-signature': signature,
     };
     const url = 'https://www.bitmex.com' + apiRoot + endpoint + query;
 
-    const requestOptions = {
+    const requestOptions: AxiosRequestConfig = {
       method,
       headers,
       data: postBody,
       url,
     };
+
     return axios(requestOptions)
       .then(response => {
         if (response.status === 200) {
@@ -74,12 +72,12 @@ export class TasksService {
         return response;
       })
       .catch(e => {
-        throw Error;
+        throw new Error(e);
       });
   }
 
   @Interval(1000)
-  gimpTrade() {
+  gimpTrade(): any {
     const bitmexPrice = axios
       .get(
         'https://www.bitmex.com/api/v1/trade?symbol=XBT&reverse=true&count=1',
@@ -103,18 +101,12 @@ export class TasksService {
     Promise.all([bitmexPrice, upbitPrice, rate]).then(
       ([btcUsd, btcKrw, usdKrw]) => {
         // 고정김프
-        const fixedGimp: number = Number(
-          (((btcKrw - Number(FIXED_USDKRW) * btcUsd) * 100) / btcKrw).toFixed(
-            3,
-          ),
-        );
+        const fixedGimp = this.getGimp(btcKrw, Number(FIXED_USDKRW), btcUsd);
 
         // 변동김프
-        const flexibleGimp: number = Number(
-          (((btcKrw - usdKrw * btcUsd) * 100) / btcKrw).toFixed(3),
-        );
+        const flexibleGimp = this.getGimp(btcKrw, usdKrw, btcUsd);
 
-        const tradeAmountKrw: number = Number(TRADE_AMOUNT_KRW);
+        const tradeAmountKrw = Number(TRADE_AMOUNT_KRW);
         const btcAmount: number = tradeAmountKrw / btcKrw;
         const tradeAmountUsd: number = Math.ceil(btcAmount * btcUsd);
 
@@ -142,10 +134,7 @@ export class TasksService {
 
           // Change tradeStatev from 'BUY' to 'SELL'
           tradeState = 'SELL';
-        } else if (
-          tradeState === 'SELL' &&
-          Number(SELL_TARGET_GIMP) <= fixedGimp
-        ) {
+        } else if (tradeState === 'SELL' && Number(SELL_TARGET_GIMP) <= fixedGimp) {
           // TODO: sell upbit
 
           // buy bitmex
