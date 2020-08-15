@@ -16,7 +16,7 @@ const config: ConnectionOptions = {
   password: DB_PASSWORD,
   database: DB_DATABASE,
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  synchronize: false,
+  synchronize: true,
   migrationsRun: true,
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   cli: {
