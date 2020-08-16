@@ -1,18 +1,48 @@
 import axios, { AxiosRequestConfig, Method } from 'axios';
-import qs from 'qs';
+import { v4 as uuidv4 } from 'uuid';
+import { sign } from 'jsonwebtoken'
+import * as qs from 'qs';
 import * as crypto from 'crypto';
 
 import { Config } from '../config';
 const {
-  BITMEX_API_KEY,
+  BITMEX_API_ID,
   BITMEX_API_SECRET,
+  UPBIT_API_KEY,
+  UPBIT_API_SECRET,
+  UPBIT_API_URL
 } = Config
 
 import { BitmexOrderDataInterface, BitmexRequestHeaderInterface } from '../../tasks/interfaces/bitmex-order.interface';
 
+export function upbitOrder(body: any){
 
-export default function bitmexOrder(method: Method, endpoint: string, data: BitmexOrderDataInterface): any {
-  const apiKey = BITMEX_API_KEY;
+  const query = qs.stringify(body)
+
+  const hash = crypto.createHash('sha512')
+  const queryHash = hash.update(query, 'utf8').digest('hex')
+
+  const payload = {
+      access_key: UPBIT_API_KEY,
+      nonce: uuidv4(),
+      query_hash: queryHash,
+      query_hash_alg: 'SHA512',
+  }
+
+  const token = sign(payload, UPBIT_API_SECRET)
+
+  const options :AxiosRequestConfig = {
+      method: "POST",
+      url: UPBIT_API_URL + "/orders",
+      headers: {Authorization: `Bearer ${token}`},
+      data: body
+  }
+
+  return axios(options)
+}
+
+export function bitmexOrder(method: Method, endpoint: string, data: BitmexOrderDataInterface): any {
+  const apiKey = BITMEX_API_ID;
   const apiSecret = BITMEX_API_SECRET;
 
   const apiRoot = '/api/v1/';
@@ -45,16 +75,4 @@ export default function bitmexOrder(method: Method, endpoint: string, data: Bitm
   };
 
   return axios(requestOptions)
-    .then(response => {
-      if (response.status === 200) {
-        console.log('-------------SUCCESS ORDER---------------');
-        console.log(
-          `${response.data.timestamp} : ${response.data.side} ${response.data.cumQty}$ at ${response.data.avgPx}$ in BITMEX`,
-        );
-      }
-      return response;
-    })
-    .catch(e => {
-      throw new Error(e);
-    });
 }

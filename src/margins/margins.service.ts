@@ -14,17 +14,17 @@ export class MarginsService {
   ) {}
 
   async create(newbie: Margin) :Promise<any>{
-    await this.marginRepository
-      .createQueryBuilder()
-      .insert()
-      .into(Margin)
-      .values({
-        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
-        bitmex_price: newbie.bitmex_price,
-        upbit_price: newbie.upbit_price,
-        rate: newbie.rate
-      })
-      .execute();
+    // await this.marginRepository
+    //   .createQueryBuilder()
+    //   .insert()
+    //   .into(Margin)
+    //   .values({
+    //     datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
+    //     bitmex_price: newbie.bitmex_price,
+    //     upbit_price: newbie.upbit_price,
+    //     rate: newbie.rate
+    //   })
+    //   .execute();
   }
 
   async findByDateRange(dateRagne: DateRangeDto): Promise<Margin[]> {

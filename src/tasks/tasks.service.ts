@@ -1,13 +1,18 @@
 import axios from 'axios';
 import * as qs from 'qs';
 
-import bitmexOrder from '../utils/order/order';
+import { bitmexOrder, upbitOrder } from '../utils/order/order';
 import getGimp from '../utils/math/gimp';
+
+import { UsersService } from '../users/users.services'
+import { User } from '../users/user.entity'
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 
 import { Config } from '../utils/config';
+
+import { upbitAccountLookUp } from '../utils/order/lookup'
 
 const {
   FIXED_USDKRW,
@@ -23,6 +28,8 @@ const {
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
+  constructor(private usersService: UsersService) {}
+
   @Interval(1000)
   gimpTrade(): any {
     const bitmexPriceUrl = BITMEX_API_URL + '/trade?' + qs.stringify({
@@ -31,71 +38,99 @@ export class TasksService {
       count: 1
     })
 
-    const upbitPriceUrl = UPBIT_API_URL + '/crix/candles/minutes/1?' + qs.stringify({
-      code: 'CRIX.UPBIT.KRW-BTC',
-      count: 1
+    const upbitPriceUrl = UPBIT_API_URL + '/ticker?' + qs.stringify({
+      markets: 'KRW-BTC'
     })
 
     const rateUrl = FREEFORE_API_URL + '/live?' + qs.stringify({
       pairs: 'USDKRW'
     })
 
-    const requests = [axios.get(bitmexPriceUrl), axios.get(upbitPriceUrl), axios.get(rateUrl)];
+    const requests = [axios.get(bitmexPriceUrl), axios.get(upbitPriceUrl), axios.get(rateUrl), upbitAccountLookUp() ];
 
     Promise.all(requests)
-      .then(([btcUsd, btcKrw, usdKrw]) => {
+      .then(async ([btcUsd, btcKrw, usdKrw, userAcountKrw]) => {
         const btcUsdPrice = btcUsd.data[0].price
-        const btcKrwPrice = btcKrw.data[0].tradePrice
+        const btcKrwPrice = btcKrw.data[0].trade_price
         const usdKrwRate = usdKrw.data.rates.USDKRW.rate.toFixed(1)
         // 고정김프
-        const fixedGimp = getGimp(btcKrwPrice, Number(FIXED_USDKRW), btcUsdPrice);
+        const currentGimp = getGimp(btcKrwPrice, Number(FIXED_USDKRW), btcUsdPrice);
 
-        // 변동김프
-        const flexibleGimp = getGimp(btcKrwPrice, usdKrwRate, btcUsdPrice);
+        let user: User = await this.usersService.findById(1);
+        let tradeState: string = user.state
 
-        const tradeAmountKrw = Number(TRADE_AMOUNT_KRW);
-        const btcAmount: number = tradeAmountKrw / btcKrwPrice;
-        const tradeAmountUsd: number = Math.ceil(btcAmount * btcUsdPrice);
+        // console.log('BUT TARGET GIMP = ', Number(BUY_TARGET_GIMP))
+        // console.log('SELL TARGET GIMP = ', Number(SELL_TARGET_GIMP))
+        console.log('BTC KRW = ', btcKrwPrice)
+        console.log('BTC USD Price = ', btcUsdPrice)
+        console.log('CURRENT GIMP = ', currentGimp)
+        // console.log('USD KRW RATE = ', usdKrwRate)
+        // console.log('유저 게정상태')
+        // console.log(userAcountKrw.data)
 
-        console.log('btcAmount : ', btcAmount);
-        console.log('tradeAmountKrw : ', tradeAmountKrw);
-        console.log('tradeAmountUsd : ', tradeAmountUsd);
+        if (tradeState === 'BUY' && Number(BUY_TARGET_GIMP) >= currentGimp) {
 
-        // TODO : Add tradeState to DB. 'BUY', 'SELL' and 'SLEEPING state
-        let tradeState = 'BUY';
-        console.log('tradeState : ', tradeState);
-        console.log('fixedGimp : ', fixedGimp);
-        console.log(
-          'TARGET_GIMP : ',
-          tradeState === 'BUY' ? BUY_TARGET_GIMP : SELL_TARGET_GIMP,
-        );
-        if (tradeState === 'BUY' && Number(BUY_TARGET_GIMP) >= fixedGimp) {
-          // TODO: buy upbit
 
-          // sell bitmex
-          bitmexOrder('POST', 'order', {
-            symbol: 'XBTUSD',
-            orderQty: -tradeAmountUsd,
-            ordType: 'Market',
-          });
+          // TODO: Get TRADE_AMOUNT_KRW from user or .env
+          const krwTradeAmount: number = userAcountKrw.data.find(o => o.currency === "KRW").balance
+          const btcTradeAmount: number = krwTradeAmount / btcKrwPrice;
+          const usdTradeAmount: number = Math.ceil(btcTradeAmount * btcUsdPrice);
 
-          // Change tradeStatev from 'BUY' to 'SELL'
-          tradeState = 'SELL';
-        } else if (tradeState === 'SELL' && Number(SELL_TARGET_GIMP) <= fixedGimp) {
-          // TODO: sell upbit
+          // const trade_currency = [
+          //   upbitOrder({
+          //     market: 'KRW-BTC',
+          //     side: 'bid',
+          //     price: krwTradeAmount,
+          //     ord_type: 'price',
+          //   }),
+          //   bitmexOrder('POST', 'order', {
+          //     symbol: 'XBTUSD',
+          //     orderQty: -usdTradeAmount,
+          //     ordType: 'Market',
+          //   })
+          // ]
 
-          // buy bitmex
-          bitmexOrder('POST', 'order', {
-            symbol: 'XBTUSD',
-            orderQty: tradeAmountUsd,
-            ordType: 'Market',
-          });
+          // Promise.all(trade_currency)
+          //   .then(()=>{
+          //     user.btc_trade_amount = btcTradeAmount
+          //     user.state = 'SELL';
+          //     this.usersService.updateUser(user)
+          //   })
+          //   .catch((err)=>{
+          //     throw new Error(err)
+          //   })          
+        } else if (tradeState === 'SELL' && Number(SELL_TARGET_GIMP) <= currentGimp) {
 
-          // Change tradeState from 'SELL' to 'SLEEPING'
-          tradeState = 'SLEEPING';
+          const btcTradeAmount: number = user.btc_trade_amount
+          const usdTradeAmount: number = Math.ceil(btcTradeAmount * btcUsdPrice);
+
+          // const trade_currency = [
+          //   upbitOrder({
+          //     market: 'KRW-BTC',
+          //     side: 'ask',
+          //     volume: btcTradeAmount,
+          //     ord_type: 'market',
+          //   }),
+          //   bitmexOrder('POST', 'order', {
+          //     symbol: 'XBTUSD',
+          //     orderQty: usdTradeAmount,
+          //     ordType: 'Market',
+          //   })
+          // ]
+
+          // Promise.all(trade_currency)
+          //   .then(()=>{
+          //     user.state = 'BUY';
+          //     user.btc_trade_amount = 0;
+          //     this.usersService.updateUser(user)
+          //   })
+          //   .catch((err)=>{
+          //     throw new Error(err)
+          //   })   
         }
       })
     .catch(e => {
+        console.log(e)
         throw new Error(e);
     });
   }
