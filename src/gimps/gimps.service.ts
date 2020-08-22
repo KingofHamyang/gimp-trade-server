@@ -14,17 +14,31 @@ export class GimpsService {
   ) {}
 
   async create(newbie: Gimp) :Promise<any>{
-    // await this.gimpRepository
-    //   .createQueryBuilder()
-    //   .insert()
-    //   .into(Gimp)
-    //   .values({
-    //     datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
-    //     bitmex_price: newbie.bitmex_price,
-    //     upbit_price: newbie.upbit_price,
-    //     rate: newbie.rate
-    //   })
-    //   .execute();
+    try {
+    await this.gimpRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Gimp)
+      .values({
+        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
+        bitmex_price: newbie.bitmex_price,
+        upbit_price: newbie.upbit_price,
+        gimp: newbie.gimp,
+        fixed_gimp: newbie.fixed_gimp,
+        usdkrw_rate: newbie.usdkrw_rate
+      })
+      .execute();
+    }catch(err){
+      console.log(err)
+    }
+  }
+
+  async findLastUpdatedGimp(): Promise<Gimp> {
+    return await this.gimpRepository
+      .createQueryBuilder()
+      .select()
+      .orderBy('datetime', 'DESC')
+      .getOne()
   }
 
   async findByDateRange(dateRagne: DateRangeDto): Promise<Gimp[]> {
@@ -37,7 +51,6 @@ export class GimpsService {
       .select()
       .andWhere(`datetime >= '${from}'`)
       .andWhere(`datetime < '${to}'`)
-      .printSql()
       .getMany()
   }
 }

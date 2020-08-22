@@ -24,7 +24,7 @@ export class UsersService {
     return await this.userRepository
       .findOne({id: id})
   }
-  
+
   async updateUser(updateUser: User) :Promise<any>{
     await this.userRepository
     .save(updateUser)

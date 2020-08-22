@@ -6,7 +6,7 @@ export class User {
   id: number;
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true})
-  but_target_gimp: number;
+  buy_target_gimp: number;
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true})
   sell_target_gimp: number;
