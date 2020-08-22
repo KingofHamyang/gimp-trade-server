@@ -3,21 +3,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import * as moment from 'moment';
-import { Margin } from './margin.entity';
+import { Gimp } from './gimp.entity';
 import { DateRangeDto } from './dto/date-range.dto'
 
 @Injectable()
-export class MarginsService {
+export class GimpsService {
   constructor(
-    @InjectRepository(Margin)
-    private marginRepository: Repository<Margin>,
+    @InjectRepository(Gimp)
+    private gimpRepository: Repository<Gimp>,
   ) {}
 
-  async create(newbie: Margin) :Promise<any>{
-    // await this.marginRepository
+  async create(newbie: Gimp) :Promise<any>{
+    // await this.gimpRepository
     //   .createQueryBuilder()
     //   .insert()
-    //   .into(Margin)
+    //   .into(Gimp)
     //   .values({
     //     datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
     //     bitmex_price: newbie.bitmex_price,
@@ -27,12 +27,12 @@ export class MarginsService {
     //   .execute();
   }
 
-  async findByDateRange(dateRagne: DateRangeDto): Promise<Margin[]> {
+  async findByDateRange(dateRagne: DateRangeDto): Promise<Gimp[]> {
 
     const from: string = moment(dateRagne.from).toISOString();
     const to: string = moment(dateRagne.to).toISOString();
 
-    return await this.marginRepository
+    return await this.gimpRepository
       .createQueryBuilder()
       .select()
       .andWhere(`datetime >= '${from}'`)

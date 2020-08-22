@@ -5,7 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule'
 
 import * as typeormConfig from './typeorm.config';
 
-import { MarginsModule } from './margins/margins.module';
+import { GimpsModule } from './gimps/gimps.module';
 import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { join } from 'path';
@@ -14,7 +14,7 @@ import { join } from 'path';
 
 @Module({
   imports: [
-    MarginsModule,
+    GimpsModule,
     UsersModule,
     TasksModule,
     TypeOrmModule.forRoot(typeormConfig),

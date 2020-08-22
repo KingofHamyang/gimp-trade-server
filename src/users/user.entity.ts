@@ -6,7 +6,10 @@ export class User {
   id: number;
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true})
-  stake: number;
+  but_target_gimp: number;
+
+  @Column('decimal', { precision: 9, scale: 0, nullable: true})
+  sell_target_gimp: number;
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true})
   btc_trade_amount: number;

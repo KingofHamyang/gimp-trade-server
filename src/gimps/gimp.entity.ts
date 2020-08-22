@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity()
-export class Margin {
+export class Gimp {
   @PrimaryColumn()
   datetime: Date;
 
