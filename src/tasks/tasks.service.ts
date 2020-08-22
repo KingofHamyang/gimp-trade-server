@@ -56,8 +56,8 @@ export class TasksService {
         // 고정김프
         const currentGimp = getGimp(btcKrwPrice, Number(FIXED_USDKRW), btcUsdPrice);
 
-        let user: User = await this.usersService.findById(1);
-        let tradeState: string = user.state
+        const user: User = await this.usersService.findById(1);
+        const tradeState: string = user.state
 
         // console.log('BUT TARGET GIMP = ', Number(BUY_TARGET_GIMP))
         // console.log('SELL TARGET GIMP = ', Number(SELL_TARGET_GIMP))
