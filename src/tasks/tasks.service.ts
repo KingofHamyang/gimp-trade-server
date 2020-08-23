@@ -78,17 +78,17 @@ export class TasksService {
             upbit_price = upbitData[upbitIteratior].trade_price;
         }
 
-        const gimp =
+        const fixed_gimp =
         bitmex_price && upbit_price
-          ? getGimp(upbit_price, Number(1150), bitmex_price)
+          ? getGimp(upbit_price, Number(FIXED_USDKRW), bitmex_price)
           : null;
 
         this.gimpsService.create({
           datetime: searchStartPoint.toDate(),
           upbit_price,
           bitmex_price,
-          gimp,
-          fixed_gimp: 0,
+          gimp: 0,
+          fixed_gimp,
           usdkrw_rate: 0
         })
         searchStartPoint.add(1, 'm');
