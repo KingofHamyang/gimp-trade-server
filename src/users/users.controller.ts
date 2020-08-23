@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common';
+import { Controller, Post, Body, Put, Param } from '@nestjs/common';
 import { User } from './user.entity';
 import { UsersService } from './users.service';
 
@@ -8,7 +8,16 @@ export class UsersController {
   constructor(private userService: UsersService) {}
 
   @Post()
-  create(@Body() body: User) {
-    this.userService.create(body);
+  async create(@Body() body: User): Promise<User> {
+    await this.userService.create(body);
+    return body
   }
+
+  
+  // @Put(':id')
+  // update(@Param('id') id: string, @Body() body: User) {
+  //   await this.userService.updateUser(body)
+  //   return 
+  // }
+
 }
