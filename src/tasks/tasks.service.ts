@@ -34,7 +34,7 @@ export class TasksService {
 
   async syncData() : Promise<any>{
     const lastIndex: Gimp = await this.gimpsService.findLastUpdatedGimp()
-    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime) : moment().subtract(20, 'minutes').utc();
+    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime) : moment().subtract(6,'months').utc();
     const lastCheckTime = lastUpdatedDatetime.add(1, 'minutes').seconds(0).milliseconds(0)
 
     while(true) {
@@ -78,17 +78,17 @@ export class TasksService {
             upbit_price = upbitData[upbitIteratior].trade_price;
         }
 
-        const gimp =
+        const fixed_gimp =
         bitmex_price && upbit_price
-          ? getGimp(upbit_price, Number(1150), bitmex_price)
+          ? getGimp(upbit_price, Number(FIXED_USDKRW), bitmex_price)
           : null;
 
         this.gimpsService.create({
           datetime: searchStartPoint.toDate(),
           upbit_price,
           bitmex_price,
-          gimp,
-          fixed_gimp: 0,
+          gimp: 0,
+          fixed_gimp,
           usdkrw_rate: 0
         })
         searchStartPoint.add(1, 'm');
@@ -96,21 +96,17 @@ export class TasksService {
     }
   }
 
-  @Interval(1000)
+  @Interval(60000)
   async test(): Promise<any>{
     try {
       if (this.isSync === false) {
         this.isSync = true
         // critical section start
-        console.log("empty, start to sync")
         await this.syncData();
         // critical section end
         this.isSync=false
-      } else {
-        console.log("state is full, wait for time")
       }
     } catch (err){
-      console.log(err)
       this.isSync=false
     }
   }
@@ -144,78 +140,68 @@ export class TasksService {
         const user: User = await this.usersService.findById(1);
         const tradeState: string = user.state
 
-        // console.log('BUT TARGET GIMP = ', Number(BUY_TARGET_GIMP))
-        // console.log('SELL TARGET GIMP = ', Number(SELL_TARGET_GIMP))
-        console.log('BTC KRW = ', btcKrwPrice)
-        console.log('BTC USD Price = ', btcUsdPrice)
-        console.log('CURRENT GIMP = ', currentGimp)
-        // console.log('USD KRW RATE = ', usdKrwRate)
-        // console.log('유저 게정상태')
-        // console.log(userAcountKrw.data)
-
         if (tradeState === 'BUY' && Number(BUY_TARGET_GIMP) >= currentGimp) {
 
 
           // TODO: Get TRADE_AMOUNT_KRW from user or .env
           const krwTradeAmount: number = userAcountKrw.data.find(o => o.currency === "KRW").balance
           const btcTradeAmount: number = krwTradeAmount / btcKrwPrice;
-          const usdTradeAmount: number = Math.ceil(btcTradeAmount * btcUsdPrice);
+          const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
 
-          // const trade_currency = [
-          //   upbitOrder({
-          //     market: 'KRW-BTC',
-          //     side: 'bid',
-          //     price: krwTradeAmount,
-          //     ord_type: 'price',
-          //   }),
-          //   bitmexOrder('POST', 'order', {
-          //     symbol: 'XBTUSD',
-          //     orderQty: -usdTradeAmount,
-          //     ordType: 'Market',
-          //   })
-          // ]
+          const trade_currency = [
+            upbitOrder({
+              market: 'KRW-BTC',
+              side: 'bid',
+              price: krwTradeAmount,
+              ord_type: 'price',
+            }),
+            bitmexOrder('POST', 'order', {
+              symbol: 'XBTUSD',
+              orderQty: -usdTradeAmount,
+              ordType: 'Market',
+            })
+          ]
 
-          // Promise.all(trade_currency)
-          //   .then(()=>{
-          //     user.btc_trade_amount = btcTradeAmount
-          //     user.state = 'SELL';
-          //     this.usersService.updateUser(user)
-          //   })
-          //   .catch((err)=>{
-          //     throw new Error(err)
-          //   })
+          Promise.all(trade_currency)
+            .then(()=>{
+              user.btc_trade_amount = btcTradeAmount
+              user.state = 'SELL';
+              this.usersService.updateUser(user)
+            })
+            .catch((err)=>{
+              throw new Error(err)
+            })
         } else if (tradeState === 'SELL' && Number(SELL_TARGET_GIMP) <= currentGimp) {
 
           const btcTradeAmount: number = user.btc_trade_amount
-          const usdTradeAmount: number = Math.ceil(btcTradeAmount * btcUsdPrice);
+          const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
 
-          // const trade_currency = [
-          //   upbitOrder({
-          //     market: 'KRW-BTC',
-          //     side: 'ask',
-          //     volume: btcTradeAmount,
-          //     ord_type: 'market',
-          //   }),
-          //   bitmexOrder('POST', 'order', {
-          //     symbol: 'XBTUSD',
-          //     orderQty: usdTradeAmount,
-          //     ordType: 'Market',
-          //   })
-          // ]
+          const trade_currency = [
+            upbitOrder({
+              market: 'KRW-BTC',
+              side: 'ask',
+              volume: btcTradeAmount,
+              ord_type: 'market',
+            }),
+            bitmexOrder('POST', 'order', {
+              symbol: 'XBTUSD',
+              orderQty: usdTradeAmount,
+              ordType: 'Market',
+            })
+          ]
 
-          // Promise.all(trade_currency)
-          //   .then(()=>{
-          //     user.state = 'BUY';
-          //     user.btc_trade_amount = 0;
-          //     this.usersService.updateUser(user)
-          //   })
-          //   .catch((err)=>{
-          //     throw new Error(err)
-          //   })
+          Promise.all(trade_currency)
+            .then(()=>{
+              user.state = 'BUY';
+              user.btc_trade_amount = 0;
+              this.usersService.updateUser(user)
+            })
+            .catch((err)=>{
+              throw new Error(err)
+            })
         }
       })
     .catch(e => {
-        console.log(e)
         throw new Error(e);
     });
   }
