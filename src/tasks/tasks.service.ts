@@ -146,7 +146,7 @@ export class TasksService {
           // TODO: Get TRADE_AMOUNT_KRW from user or .env
           const krwTradeAmount: number = userAcountKrw.data.find(o => o.currency === "KRW").balance
           const btcTradeAmount: number = krwTradeAmount / btcKrwPrice;
-          const usdTradeAmount: number = Math.ceil(btcTradeAmount * btcUsdPrice);
+          const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
 
           const trade_currency = [
             upbitOrder({
@@ -174,7 +174,7 @@ export class TasksService {
         } else if (tradeState === 'SELL' && Number(SELL_TARGET_GIMP) <= currentGimp) {
 
           const btcTradeAmount: number = user.btc_trade_amount
-          const usdTradeAmount: number = Math.ceil(btcTradeAmount * btcUsdPrice);
+          const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
 
           const trade_currency = [
             upbitOrder({
