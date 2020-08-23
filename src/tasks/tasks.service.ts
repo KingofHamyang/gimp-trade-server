@@ -17,9 +17,6 @@ import { Gimp } from '../gimps/gimp.entity'
 
 const {
   FIXED_USDKRW,
-  TRADE_AMOUNT_KRW,
-  BUY_TARGET_GIMP,
-  SELL_TARGET_GIMP,
   BITMEX_API_URL,
   UPBIT_API_URL,
   FREEFORE_API_URL,
@@ -34,7 +31,7 @@ export class TasksService {
 
   async syncData() : Promise<any>{
     const lastIndex: Gimp = await this.gimpsService.findLastUpdatedGimp()
-    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime) : moment().subtract(6,'months').utc();
+    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime) : moment().subtract(1,'months').utc();
     const lastCheckTime = lastUpdatedDatetime.add(1, 'minutes').seconds(0).milliseconds(0)
 
     while(true) {
@@ -96,7 +93,7 @@ export class TasksService {
     }
   }
 
-  @Interval(60000)
+  @Interval(6000)
   async test(): Promise<any>{
     try {
       if (this.isSync === false) {
@@ -133,18 +130,20 @@ export class TasksService {
       .then(async ([btcUsd, btcKrw, usdKrw, userAcountKrw]) => {
         const btcUsdPrice = btcUsd.data[0].price
         const btcKrwPrice = btcKrw.data[0].trade_price
-        const usdKrwRate = usdKrw.data.rates.USDKRW.rate.toFixed(1)
+        // const usdKrwRate = usdKrw.data.rates.USDKRW.rate.toFixed(1)
         // 고정김프
         const currentGimp = getGimp(btcKrwPrice, Number(FIXED_USDKRW), btcUsdPrice);
-
         const user: User = await this.usersService.findById(1);
         const tradeState: string = user.state
-
-        if (tradeState === 'BUY' && Number(BUY_TARGET_GIMP) >= currentGimp) {
-
-
-          // TODO: Get TRADE_AMOUNT_KRW from user or .env
-          const krwTradeAmount: number = userAcountKrw.data.find(o => o.currency === "KRW").balance
+        
+        if (tradeState === 'BUY' && Number(user.buy_target_gimp) >= currentGimp) {
+          const krwTradeAmount: number = user.krw_trade_amount;
+          const currentAcountKrw = userAcountKrw.data.find(o => o.currency === "KRW").balance
+          if (currentAcountKrw < krwTradeAmount * 1.001) {
+            // TODO: Add log
+            console.log('too high krwTradeAmount')
+            return;
+          }
           const btcTradeAmount: number = krwTradeAmount / btcKrwPrice;
           const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
 
@@ -171,7 +170,7 @@ export class TasksService {
             .catch((err)=>{
               throw new Error(err)
             })
-        } else if (tradeState === 'SELL' && Number(SELL_TARGET_GIMP) <= currentGimp) {
+        } else if (tradeState === 'SELL' && Number(user.sell_target_gimp) <= currentGimp) {
 
           const btcTradeAmount: number = user.btc_trade_amount
           const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);

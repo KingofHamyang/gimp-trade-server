@@ -10,7 +10,7 @@ export class GimpsController {
 
   @Post()
   create(@Body() body: Gimp) {
-    this.gimpService.create(body);
+    return this.gimpService.create(body);
   }
 
   @Get()
