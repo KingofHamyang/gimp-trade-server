@@ -13,7 +13,6 @@ export class UsersController {
     return body
   }
 
-  
   // @Put(':id')
   // update(@Param('id') id: string, @Body() body: User) {
   //   await this.userService.updateUser(body)
