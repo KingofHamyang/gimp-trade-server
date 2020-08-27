@@ -8,13 +8,8 @@ import { GimpsService } from './gimps.service'
 export class GimpsController {
   constructor(private gimpService: GimpsService) {}
 
-  @Post()
-  create(@Body() body: Gimp) {
-    return this.gimpService.create(body);
-  }
-
   @Get()
-  findByDateRange(@Query() query: DateRangeDto): Promise<Gimp[]> {
-    return this.gimpService.findByDateRange(query);
+  async findByDateRange(@Query() query: DateRangeDto): Promise<Gimp[]> {
+    return await this.gimpService.findByDateRange(query);
   }
 }

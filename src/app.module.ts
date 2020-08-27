@@ -10,8 +10,6 @@ import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { join } from 'path';
 
-
-
 @Module({
   imports: [
     GimpsModule,

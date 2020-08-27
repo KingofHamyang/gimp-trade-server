@@ -31,7 +31,7 @@ export class TasksService {
 
   async syncData() : Promise<any>{
     const lastIndex: Gimp = await this.gimpsService.findLastUpdatedGimp()
-    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime) : moment().subtract(1,'months').utc();
+    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime).utc() : moment().subtract(1,'months').utc();
     const lastCheckTime = lastUpdatedDatetime.add(1, 'minutes').seconds(0).milliseconds(0)
 
     while(true) {
@@ -110,6 +110,10 @@ export class TasksService {
 
   @Interval(1000)
   gimpTrade(): any {
+    if (process.env.NODE_ENV != 'production'){
+      return;
+    }
+
     const bitmexPriceUrl = BITMEX_API_URL + '/trade?' + qs.stringify({
       symbol: 'XBT',
       reverse: true,
@@ -135,7 +139,7 @@ export class TasksService {
         const currentGimp = getGimp(btcKrwPrice, Number(FIXED_USDKRW), btcUsdPrice);
         const user: User = await this.usersService.findById(1);
         const tradeState: string = user.state
-        
+
         if (tradeState === 'BUY' && Number(user.buy_target_gimp) >= currentGimp) {
           const krwTradeAmount: number = user.krw_trade_amount;
           const currentAcountKrw = userAcountKrw.data.find(o => o.currency === "KRW").balance
@@ -163,9 +167,7 @@ export class TasksService {
 
           Promise.all(trade_currency)
             .then(()=>{
-              user.btc_trade_amount = btcTradeAmount
-              user.state = 'SELL';
-              this.usersService.updateUser(user)
+              this.usersService.stateTransition(user, btcTradeAmount, 'SELL')
             })
             .catch((err)=>{
               throw new Error(err)
@@ -191,9 +193,7 @@ export class TasksService {
 
           Promise.all(trade_currency)
             .then(()=>{
-              user.state = 'BUY';
-              user.btc_trade_amount = 0;
-              this.usersService.updateUser(user)
+              this.usersService.stateTransition(user, 0, 'BUY')
             })
             .catch((err)=>{
               throw new Error(err)
