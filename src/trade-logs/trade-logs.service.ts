@@ -9,7 +9,7 @@ export class TradeLogsService {
     private tradeLogRepository: Repository<TradeLog>,
   ) {}
 
-  async addTradeLog(tradeLog: TradeLog){
+  async createTradeLog(tradeLog: TradeLog){
     await this.tradeLogRepository.save(tradeLog)
   }
 }

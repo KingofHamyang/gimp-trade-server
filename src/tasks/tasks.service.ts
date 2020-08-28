@@ -186,7 +186,7 @@ export class TasksService {
               tradeLog.type = BUY,
               tradeLog.datetime = moment().toDate()
               
-              this.tradeLogsService.addTradeLog(tradeLog)
+              this.tradeLogsService.createTradeLog(tradeLog)
               this.usersService.stateTransition(user, upbitVolume, SELL)
             })
             .catch((err)=>{
@@ -228,7 +228,7 @@ export class TasksService {
               tradeLog.type = SELL,
               tradeLog.datetime = moment().toDate()
               
-              this.tradeLogsService.addTradeLog(tradeLog)
+              this.tradeLogsService.createTradeLog(tradeLog)
               this.usersService.stateTransition(user, 0, BUY)
               
             })
