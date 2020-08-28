@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity()
 export class Gimp {
-  @PrimaryColumn()
+  @PrimaryColumn({ type: 'timestamptz' })
   datetime: Date;
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true})
