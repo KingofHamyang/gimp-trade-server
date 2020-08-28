@@ -8,16 +8,21 @@ export class TradeLog {
   @Column({ type: 'timestamptz' })
   datetime: Date;
 
-  //start: 1 // end: 0
   @Column()
-  type: number;
+  type: string;
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true })
   krw_trade_amount: number;
-
+  
   @Column('decimal', { precision: 9, scale: 0, nullable: true })
+  krw_trade_fee: number;
+
+  @Column('decimal', { precision: 9, scale: 5, nullable: true })
   btc_trade_amount: number;
 
-  @Column('decimal', { precision: 7, scale: 1, nullable: true })
+  @Column('decimal', { precision: 9, scale: 0, nullable: true })
   usd_trade_amount: number;
+  
+  @Column('decimal', { precision: 7, scale: 3, nullable: true })
+  usd_trade_fee: number;
 }
