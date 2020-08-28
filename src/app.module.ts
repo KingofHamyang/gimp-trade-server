@@ -9,6 +9,7 @@ import { GimpsModule } from './gimps/gimps.module';
 import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { join } from 'path';
+import { TradeLogsModule } from './trade-logs/trade-logs.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { join } from 'path';
     ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client'),
-    })
+    }),
+    TradeLogsModule
   ],
 })
 export class AppModule {}
