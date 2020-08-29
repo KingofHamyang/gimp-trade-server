@@ -216,15 +216,6 @@ export class TasksService {
               const upbitFee = upbitRes.data.paid_fee;
               const bitmexFee = bitmexUsdTradeAmount*0.75;
 
-              const tradeLog = new TradeLog()
-              tradeLog.krw_trade_amount = Math.round(upbitAvgPrice*upbitVolume),
-              tradeLog.btc_trade_amount = Number(upbitVolume.toFixed(5)),
-              tradeLog.usd_trade_amount = Math.round(bitmexUsdTradeAmount),
-              tradeLog.krw_trade_fee = Math.round(upbitFee),
-              tradeLog.usd_trade_fee = Number(bitmexFee.toFixed(3)),
-              tradeLog.type = 'SELL',
-              tradeLog.datetime = moment().toDate()
-
               this.tradeLogsService.createTradeLog({
                 krw_trade_amount : Math.round(upbitAvgPrice*upbitVolume),
                 btc_trade_amount : Number(upbitVolume.toFixed(5)),
