@@ -15,7 +15,6 @@ import { GimpsService } from '../gimps/gimps.service'
 import { TradeLogsService } from '../trade-logs/trade-logs.service'
 import { User } from '../users/user.entity'
 import { Gimp } from '../gimps/gimp.entity'
-import { TradeLog } from '../trade-logs/trade-log.entity'
 
 const {
   FIXED_USDKRW,
@@ -112,7 +111,7 @@ export class TasksService {
 
   @Interval(1000)
   gimpTrade(): any {
-    if (process.env.NODE_ENV != 'production'){
+    if (process.env.IS_TRADE != 'true'){
       return;
     }
 
