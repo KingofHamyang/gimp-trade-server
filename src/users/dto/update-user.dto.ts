@@ -1,4 +1,4 @@
-export class UpdateUserDto {
+export interface UpdateUserDto {
   buy_target_gimp?: number;
   sell_target_gimp?: number;
   krw_trade_amount?: number;
