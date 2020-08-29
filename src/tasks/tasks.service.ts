@@ -71,8 +71,8 @@ export class TasksService {
             bitmex_price = bitmexData[bitmexIterator].close;
         }
 
-        for (;upbitIteratior < upbitData.length && searchStartPoint >= moment(upbitData[upbitIteratior].candle_date_time_kst); upbitIteratior++){
-          if (searchStartPoint.diff(moment(upbitData[upbitIteratior].candle_date_time_kst)) === 0)
+        for (;upbitIteratior < upbitData.length && searchStartPoint >= moment(upbitData[upbitIteratior].candle_date_time_utc + 'Z'); upbitIteratior++){
+          if (searchStartPoint.diff(moment(upbitData[upbitIteratior].candle_date_time_utc + 'Z')) === 0)
             upbit_price = upbitData[upbitIteratior].trade_price;
         }
 
@@ -94,7 +94,7 @@ export class TasksService {
     }
   }
 
-  @Interval(60000)
+  @Interval(1000)
   async test(): Promise<any>{
     try {
       if (this.isSync === false) {
