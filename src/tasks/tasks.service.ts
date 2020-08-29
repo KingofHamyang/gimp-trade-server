@@ -22,7 +22,7 @@ const {
   BITMEX_API_URL,
   UPBIT_API_URL,
   FREEFORE_API_URL,
-  SELL, 
+  SELL,
   BUY,
 } = Config;
 
@@ -176,7 +176,7 @@ export class TasksService {
               const bitmexUsdTradeAmount = bitmexRes.data.cumQty;
               const upbitFee = upbitRes.data.paid_fee;
               const bitmexFee = bitmexUsdTradeAmount*0.75;
-              
+
               const tradeLog = new TradeLog()
               tradeLog.krw_trade_amount= Math.round(upbitAvgPrice*upbitVolume),
               tradeLog.btc_trade_amount= Number(upbitVolume.toFixed(5)),
@@ -185,7 +185,7 @@ export class TasksService {
               tradeLog.usd_trade_fee = Number(bitmexFee.toFixed(3)),
               tradeLog.type = BUY,
               tradeLog.datetime = moment().toDate()
-              
+
               this.tradeLogsService.createTradeLog(tradeLog)
               this.usersService.stateTransition(user, upbitVolume, SELL)
             })
@@ -194,7 +194,7 @@ export class TasksService {
             })
         } else if (tradeState === SELL && Number(user.sell_target_gimp) <= currentGimp) {
           const btcTradeAmount: number = user.btc_trade_amount
-   
+
           const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
 
           const trade_currency = [
@@ -227,10 +227,10 @@ export class TasksService {
               tradeLog.usd_trade_fee = Number(bitmexFee.toFixed(3)),
               tradeLog.type = SELL,
               tradeLog.datetime = moment().toDate()
-              
+
               this.tradeLogsService.createTradeLog(tradeLog)
               this.usersService.stateTransition(user, 0, BUY)
-              
+
             })
             .catch((err)=>{
               throw new Error(err)
