@@ -12,8 +12,6 @@ switch (process.env.NODE_ENV) {
 dotenv.config({ path: path });
 
 export const Config = process.env;
-Config.SELL = "SELL";
-Config.BUY = "BUY";
 
 // export const DB_TPYE = process.env.DB_TPYE;
 // export const DB_HOST = process.env.DB_HOST;
