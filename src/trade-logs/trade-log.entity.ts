@@ -13,7 +13,7 @@ export class TradeLog {
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true })
   krw_trade_amount: number;
-  
+
   @Column('decimal', { precision: 9, scale: 0, nullable: true })
   krw_trade_fee: number;
 
@@ -22,7 +22,7 @@ export class TradeLog {
 
   @Column('decimal', { precision: 9, scale: 0, nullable: true })
   usd_trade_amount: number;
-  
+
   @Column('decimal', { precision: 7, scale: 3, nullable: true })
   usd_trade_fee: number;
 }

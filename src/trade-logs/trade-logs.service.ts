@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TradeLog } from './trade-log.entity';
+
+import { TradeLog } from './trade-log.entity'
+import { CreateTradeLogInterface } from './interface/create-trade-log.interface'
+
 @Injectable()
 export class TradeLogsService {
   constructor(
@@ -9,7 +12,7 @@ export class TradeLogsService {
     private tradeLogRepository: Repository<TradeLog>,
   ) {}
 
-  async createTradeLog(tradeLog: TradeLog){
-    await this.tradeLogRepository.save(tradeLog)
+  async createTradeLog(tradeLog: CreateTradeLogInterface): Promise<TradeLog> {
+    return await this.tradeLogRepository.save(tradeLog)
   }
 }

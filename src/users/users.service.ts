@@ -18,6 +18,7 @@ export class UsersService {
       btc_trade_amount: 0
     });
   }
+
   async findById(id: number) :Promise<any>{
     return this.userRepository
       .findOne({id: id})

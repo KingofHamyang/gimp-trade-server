@@ -22,8 +22,6 @@ const {
   BITMEX_API_URL,
   UPBIT_API_URL,
   FREEFORE_API_URL,
-  SELL,
-  BUY,
 } = Config;
 
 @Injectable()
@@ -144,7 +142,7 @@ export class TasksService {
         const user: User = await this.usersService.findById(1);
         const tradeState: string = user.state
         // BUY
-        if (tradeState === BUY && Number(user.buy_target_gimp) >= currentGimp) {
+        if (tradeState === 'BUY' && Number(user.buy_target_gimp) >= currentGimp) {
           const krwTradeAmount: number = user.krw_trade_amount;
           const currentAcountKrw = userAcountKrw.data.find(o => o.currency === "KRW").balance
           if (currentAcountKrw < krwTradeAmount * 1.001) {
@@ -177,22 +175,21 @@ export class TasksService {
               const upbitFee = upbitRes.data.paid_fee;
               const bitmexFee = bitmexUsdTradeAmount*0.75;
 
-              const tradeLog = new TradeLog()
-              tradeLog.krw_trade_amount= Math.round(upbitAvgPrice*upbitVolume),
-              tradeLog.btc_trade_amount= Number(upbitVolume.toFixed(5)),
-              tradeLog.usd_trade_amount= Math.round(bitmexUsdTradeAmount),
-              tradeLog.krw_trade_fee = Math.round(upbitFee),
-              tradeLog.usd_trade_fee = Number(bitmexFee.toFixed(3)),
-              tradeLog.type = BUY,
-              tradeLog.datetime = moment().toDate()
-
-              this.tradeLogsService.createTradeLog(tradeLog)
-              this.usersService.stateTransition(user, upbitVolume, SELL)
+              this.tradeLogsService.createTradeLog({
+                krw_trade_amount: Math.round(upbitAvgPrice*upbitVolume),
+                btc_trade_amount: Number(upbitVolume.toFixed(5)),
+                usd_trade_amount: Math.round(bitmexUsdTradeAmount),
+                krw_trade_fee: Math.round(upbitFee),
+                usd_trade_fee: Number(bitmexFee.toFixed(3)),
+                type: 'BUY',
+                datetime: moment().toDate().toISOString()
+              })
+              this.usersService.stateTransition(user, upbitVolume, 'SELL')
             })
             .catch((err)=>{
               throw new Error(err)
             })
-        } else if (tradeState === SELL && Number(user.sell_target_gimp) <= currentGimp) {
+        } else if (tradeState === 'SELL' && Number(user.sell_target_gimp) <= currentGimp) {
           const btcTradeAmount: number = user.btc_trade_amount
 
           const usdTradeAmount: number = Math.round(btcTradeAmount * btcUsdPrice);
@@ -225,12 +222,19 @@ export class TasksService {
               tradeLog.usd_trade_amount = Math.round(bitmexUsdTradeAmount),
               tradeLog.krw_trade_fee = Math.round(upbitFee),
               tradeLog.usd_trade_fee = Number(bitmexFee.toFixed(3)),
-              tradeLog.type = SELL,
+              tradeLog.type = 'SELL',
               tradeLog.datetime = moment().toDate()
 
-              this.tradeLogsService.createTradeLog(tradeLog)
-              this.usersService.stateTransition(user, 0, BUY)
-
+              this.tradeLogsService.createTradeLog({
+                krw_trade_amount : Math.round(upbitAvgPrice*upbitVolume),
+                btc_trade_amount : Number(upbitVolume.toFixed(5)),
+                usd_trade_amount : Math.round(bitmexUsdTradeAmount),
+                krw_trade_fee : Math.round(upbitFee),
+                usd_trade_fee : Number(bitmexFee.toFixed(3)),
+                type : 'SELL',
+                datetime : moment().toDate().toISOString()
+              })
+              this.usersService.stateTransition(user, 0, 'BUY')
             })
             .catch((err)=>{
               throw new Error(err)
