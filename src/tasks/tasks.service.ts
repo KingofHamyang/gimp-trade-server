@@ -94,7 +94,7 @@ export class TasksService {
     }
   }
 
-  @Interval(6000)
+  @Interval(60000)
   async test(): Promise<any>{
     try {
       if (this.isSync === false) {
