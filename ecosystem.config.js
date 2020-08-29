@@ -8,10 +8,12 @@ module.exports = {
     watch: false, // 폴더 내의 파일에 변경이 있을때, 앱이 리로딩 여부
     max_memory_restart: '1G',
     env: { // 앱의 env를 설정
-      NODE_ENV: 'development'
+      NODE_ENV: 'development',
+      IS_TRADE: 'false'
     },
     env_production: {
-      NODE_ENV: 'production'
+      NODE_ENV: 'production',
+      IS_TRADE: 'false'
     },
     log_date_format: "YYYY-MM-DD HH:mm Z",
     out_file: "logs/out.log"
