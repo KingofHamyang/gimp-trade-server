@@ -20,7 +20,7 @@ export class GimpsService {
       .insert()
       .into(Gimp)
       .values({
-        datetime: moment(newbie.datetime).format("YYYY-MM-DD HH:mm:ss").toString(),
+        datetime: moment(newbie.datetime).toISOString(),
         bitmex_price: newbie.bitmex_price,
         upbit_price: newbie.upbit_price,
         gimp: newbie.gimp,
@@ -43,14 +43,15 @@ export class GimpsService {
 
   async findByDateRange(dateRagne: DateRangeDto): Promise<Gimp[]> {
 
-    const from: string = moment(dateRagne.from).toISOString();
-    const to: string = moment(dateRagne.to).toISOString();
+    const from = moment(dateRagne.from);
+    const to = moment(dateRagne.to);
 
-    return await this.gimpRepository
+    return this.gimpRepository
       .createQueryBuilder()
       .select()
-      .andWhere(`datetime >= '${from}'`)
-      .andWhere(`datetime < '${to}'`)
+      .andWhere(`datetime >= '${from.toISOString()}'`)
+      .andWhere(`datetime < '${to.toISOString()}'`)
+      .orderBy('datetime', 'ASC')
       .getMany()
   }
 }
