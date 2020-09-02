@@ -181,7 +181,7 @@ export class TasksService {
               const btcTradeAmout: number = upbitKrwTradeAmout/btcKrwPrice;
               const bitmexUsdTradeAmount = bitmexRes.data.cumQty;
               const upbitFee = upbitRes.data.reserved_fee;
-              const bitmexFee = bitmexUsdTradeAmount*0.075;
+              const bitmexFee = bitmexUsdTradeAmount*0.00075;
 
               this.tradeLogsService.createTradeLog({
                 krw_trade_amount: Math.round(upbitKrwTradeAmout),
@@ -224,7 +224,7 @@ export class TasksService {
               const upbitVolume = Number(upbitRes.data.volume);
               const bitmexUsdTradeAmount = bitmexRes.data.cumQty;
               const upbitFee = Number(upbitRes.data.reserved_fee);
-              const bitmexFee = bitmexUsdTradeAmount*0.075;
+              const bitmexFee = bitmexUsdTradeAmount*0.00075;
 
               this.tradeLogsService.createTradeLog({
                 krw_trade_amount : Math.round(upbitVolume * btcKrwPrice),
