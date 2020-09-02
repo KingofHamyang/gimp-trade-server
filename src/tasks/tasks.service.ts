@@ -185,14 +185,14 @@ export class TasksService {
 
               this.tradeLogsService.createTradeLog({
                 krw_trade_amount: Math.round(upbitKrwTradeAmout),
-                btc_trade_amount: Number(btcTradeAmout.toFixed(5)),
+                btc_trade_amount: Number(btcTradeAmout.toFixed(10)),
                 usd_trade_amount: Math.round(bitmexUsdTradeAmount),
                 krw_trade_fee: Math.round(upbitFee),
                 usd_trade_fee: Number(bitmexFee.toFixed(3)),
                 type: 'BUY',
                 datetime: moment().toDate().toISOString()
               })
-              this.usersService.stateTransition(user, Number(btcTradeAmout.toFixed(5)), 'SELL')
+              this.usersService.stateTransition(user, Number(btcTradeAmout.toFixed(10)), 'SELL')
             })
             .catch((err)=>{
               throw new Error(err)
@@ -228,7 +228,7 @@ export class TasksService {
 
               this.tradeLogsService.createTradeLog({
                 krw_trade_amount : Math.round(upbitVolume * btcKrwPrice),
-                btc_trade_amount : Number(upbitVolume.toFixed(5)),
+                btc_trade_amount : Number(upbitVolume.toFixed(10)),
                 usd_trade_amount : Math.round(bitmexUsdTradeAmount),
                 krw_trade_fee : Math.round(upbitFee),
                 usd_trade_fee : Number(bitmexFee.toFixed(3)),
