@@ -26,94 +26,12 @@ const {
 @Injectable()
 export class TasksService {
   private isSync = false;
+  private isTrade = false;
   private readonly logger = new Logger(TasksService.name);
 
   constructor(private usersService: UsersService, private gimpsService: GimpsService, private tradeLogsService: TradeLogsService) {}
 
-  async syncData() : Promise<any>{
-    const lastIndex: Gimp = await this.gimpsService.findLastUpdatedGimp()
-    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime).utc() : moment().subtract(6,'months').utc();
-    const lastCheckTime = lastUpdatedDatetime.add(1, 'minutes').seconds(0).milliseconds(0)
-
-    while(true) {
-      const currentTime = moment()
-        .seconds(0)
-        .milliseconds(0)
-        .utc()
-      if (lastCheckTime >= currentTime) break;
-
-      const searchStartPoint = moment(lastCheckTime);
-      lastCheckTime.add(199, 'minutes');
-
-      const bitmexRequest = await axios
-        .get(
-          `https://www.bitmex.com/api/v1/trade/bucketed?binSize=1m&symbol=XBT&reverse=true&endTime=${lastCheckTime}&count=200`,
-        )
-      const upbitRequest = await axios
-        .get(
-          `https://api.upbit.com/v1/candles/minutes/1?market=KRW-BTC&count=200&to=${lastCheckTime
-            .add(1, 'minutes')
-            .format('YYYY-MM-DD HH:mm:ss')}`,
-        )
-
-      const bitmexData = bitmexRequest.data.reverse();
-      const upbitData = upbitRequest.data.reverse();
-
-      let bitmexIterator = 0
-      let upbitIteratior = 0
-
-      for (let i = 0 ; i < 200 && searchStartPoint < currentTime; i++ ){
-        let bitmex_price;
-        let upbit_price;
-
-        for (;bitmexIterator < bitmexData.length && searchStartPoint >= moment(bitmexData[bitmexIterator].timestamp); bitmexIterator++){
-          if (searchStartPoint.diff(moment(bitmexData[bitmexIterator].timestamp)) === 0)
-            bitmex_price = bitmexData[bitmexIterator].close;
-        }
-
-        for (;upbitIteratior < upbitData.length && searchStartPoint >= moment(upbitData[upbitIteratior].candle_date_time_utc + 'Z'); upbitIteratior++){
-          if (searchStartPoint.diff(moment(upbitData[upbitIteratior].candle_date_time_utc + 'Z')) === 0)
-            upbit_price = upbitData[upbitIteratior].trade_price;
-        }
-
-        const fixed_gimp =
-        bitmex_price && upbit_price
-          ? getGimp(upbit_price, Number(FIXED_USDKRW), bitmex_price)
-          : null;
-
-        this.gimpsService.create({
-          datetime: searchStartPoint.toDate(),
-          upbit_price,
-          bitmex_price,
-          gimp: 0,
-          fixed_gimp,
-          usdkrw_rate: 0
-        })
-        searchStartPoint.add(1, 'm');
-      }
-    }
-  }
-
-  @Interval(60000)
-  async test(): Promise<any>{
-    try {
-      if (this.isSync === false) {
-        this.isSync = true
-        // critical section start
-        await this.syncData();
-        // critical section end
-        this.isSync=false
-      }
-    } catch (err){
-      this.isSync=false
-    }
-  }
-
-  @Interval(1000)
-  gimpTrade(): any {
-    if (process.env.IS_TRADE != 'true'){
-      return;
-    }
+  async trade() : Promise<any> {
 
     const bitmexPriceUrl = BITMEX_API_URL + '/trade?' + qs.stringify({
       symbol: 'XBT',
@@ -242,5 +160,102 @@ export class TasksService {
         console.log(e)
         throw new Error(e);
     });
+  }
+
+  async syncData() : Promise<any>{
+    const lastIndex: Gimp = await this.gimpsService.findLastUpdatedGimp()
+    const lastUpdatedDatetime = lastIndex ? moment(lastIndex.datetime).utc() : moment().subtract(6,'months').utc();
+    const lastCheckTime = lastUpdatedDatetime.add(1, 'minutes').seconds(0).milliseconds(0)
+
+    while(true) {
+      const currentTime = moment()
+        .seconds(0)
+        .milliseconds(0)
+        .utc()
+      if (lastCheckTime >= currentTime) break;
+
+      const searchStartPoint = moment(lastCheckTime);
+      lastCheckTime.add(199, 'minutes');
+
+      const bitmexRequest = await axios
+        .get(
+          `https://www.bitmex.com/api/v1/trade/bucketed?binSize=1m&symbol=XBT&reverse=true&endTime=${lastCheckTime}&count=200`,
+        )
+      const upbitRequest = await axios
+        .get(
+          `https://api.upbit.com/v1/candles/minutes/1?market=KRW-BTC&count=200&to=${lastCheckTime
+            .add(1, 'minutes')
+            .format('YYYY-MM-DD HH:mm:ss')}`,
+        )
+
+      const bitmexData = bitmexRequest.data.reverse();
+      const upbitData = upbitRequest.data.reverse();
+
+      let bitmexIterator = 0
+      let upbitIteratior = 0
+
+      for (let i = 0 ; i < 200 && searchStartPoint < currentTime; i++ ){
+        let bitmex_price;
+        let upbit_price;
+
+        for (;bitmexIterator < bitmexData.length && searchStartPoint >= moment(bitmexData[bitmexIterator].timestamp); bitmexIterator++){
+          if (searchStartPoint.diff(moment(bitmexData[bitmexIterator].timestamp)) === 0)
+            bitmex_price = bitmexData[bitmexIterator].close;
+        }
+
+        for (;upbitIteratior < upbitData.length && searchStartPoint >= moment(upbitData[upbitIteratior].candle_date_time_utc + 'Z'); upbitIteratior++){
+          if (searchStartPoint.diff(moment(upbitData[upbitIteratior].candle_date_time_utc + 'Z')) === 0)
+            upbit_price = upbitData[upbitIteratior].trade_price;
+        }
+
+        const fixed_gimp =
+        bitmex_price && upbit_price
+          ? getGimp(upbit_price, Number(FIXED_USDKRW), bitmex_price)
+          : null;
+
+        this.gimpsService.create({
+          datetime: searchStartPoint.toDate(),
+          upbit_price,
+          bitmex_price,
+          gimp: 0,
+          fixed_gimp,
+          usdkrw_rate: 0
+        })
+        searchStartPoint.add(1, 'm');
+      }
+    }
+  }
+
+  @Interval(60000)
+  async test(): Promise<any>{
+    try {
+      if (this.isSync === false) {
+        this.isSync = true
+        // critical section start
+        await this.syncData();
+        // critical section end
+        this.isSync=false
+      }
+    } catch (err){
+      this.isSync=false
+    }
+  }
+
+  @Interval(1000)
+  async gimpTrade(): Promise<any> {
+    if (process.env.IS_TRADE != 'true'){
+      return;
+    }
+    try {
+      if (this.isTrade === false) {
+        this.isTrade = true
+        // critical section start
+        await this.trade();
+        // critical section end
+        this.isTrade=false
+      }
+    } catch (err){
+      this.isTrade=false
+    }
   }
 }
