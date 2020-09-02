@@ -14,7 +14,7 @@ export class User {
   @Column('decimal', { precision: 9, scale: 0, nullable: true })
   krw_trade_amount: number;
 
-  @Column('decimal', { precision: 9, scale: 5, nullable: true })
+  @Column('decimal', { precision: 12, scale: 10, nullable: true })
   btc_trade_amount: number;
 
   @Column()

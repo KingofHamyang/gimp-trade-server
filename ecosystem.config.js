@@ -15,6 +15,10 @@ module.exports = {
       NODE_ENV: 'production',
       IS_TRADE: 'false'
     },
+    env_production_trade: {
+      NODE_ENV: 'production',
+      IS_TRADE: 'true'
+    },
     log_date_format: "YYYY-MM-DD HH:mm Z",
     out_file: "logs/out.log"
   }],
