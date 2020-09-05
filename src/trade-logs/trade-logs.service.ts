@@ -12,6 +12,12 @@ export class TradeLogsService {
     private tradeLogRepository: Repository<TradeLog>,
   ) {}
 
+  async findTradeLogs(): Promise<TradeLog[]> {
+    return await this.tradeLogRepository
+      .createQueryBuilder()
+      .select()
+      .getMany()
+  }
   async createTradeLog(tradeLog: CreateTradeLogInterface): Promise<TradeLog> {
     return await this.tradeLogRepository.save(tradeLog)
   }
