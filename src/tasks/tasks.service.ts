@@ -96,7 +96,7 @@ export class TasksService {
               const upbitFee = upbitRes.data.reserved_fee;
               const bitmexFee = bitmexUsdTradeAmount*0.00075;
 
-              this.tradeLogsService.createTradeLog({
+              await this.tradeLogsService.createTradeLog({
                 krw_trade_amount: Math.round(upbitKrwTradeAmount),
                 btc_trade_amount: Number(btcTradeAmount.toFixed(10)),
                 usd_trade_amount: Math.round(bitmexUsdTradeAmount),
@@ -105,7 +105,7 @@ export class TasksService {
                 type: 'BUY',
                 datetime: moment().toDate().toISOString()
               })
-              this.usersService.stateTransition(user, Number(btcTradeAmount.toFixed(10)), 'SELL')
+              await this.usersService.stateTransition(user, Number(btcTradeAmount.toFixed(10)), 'SELL')
             })
             .catch((err)=>{
               console.log(err)
@@ -139,7 +139,7 @@ export class TasksService {
               const upbitFee = Number(upbitRes.data.reserved_fee);
               const bitmexFee = bitmexUsdTradeAmount*0.00075;
 
-              this.tradeLogsService.createTradeLog({
+              await this.tradeLogsService.createTradeLog({
                 krw_trade_amount : Math.floor(tradeRes.data.trades[0].funds),
                 btc_trade_amount : Number(upbitVolume.toFixed(10)),
                 usd_trade_amount : Math.round(bitmexUsdTradeAmount),
@@ -148,7 +148,7 @@ export class TasksService {
                 type : 'SELL',
                 datetime : moment().toDate().toISOString()
               })
-              this.usersService.stateTransition(user, 0, 'BUY')
+              await this.usersService.stateTransition(user, 0, 'BUY')
             })
             .catch((err)=>{
               console.log(err)
