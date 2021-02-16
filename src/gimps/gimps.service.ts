@@ -42,16 +42,27 @@ export class GimpsService {
   }
 
   async findByDateRange(dateRagne: DateRangeDto): Promise<Gimp[]> {
-
-    const from = moment(dateRagne.from);
+    
+    const from = dateRagne.from ? moment(dateRagne.from) : undefined;
     const to = moment(dateRagne.to);
 
-    return this.gimpRepository
+    if (from) {
+      return this.gimpRepository
       .createQueryBuilder()
       .select()
+      .where(`datetime <= '${to.toISOString()}'`)
       .andWhere(`datetime >= '${from.toISOString()}'`)
-      .andWhere(`datetime < '${to.toISOString()}'`)
-      .orderBy('datetime', 'ASC')
+      .orderBy('datetime', 'DESC')
       .getMany()
+    }
+    else {
+      return this.gimpRepository
+      .createQueryBuilder()
+      .select()
+      .where(`datetime <= '${to.toISOString()}'`)
+      .orderBy('datetime', 'DESC')
+      .limit(1)
+      .getMany()
+    }
   }
 }
